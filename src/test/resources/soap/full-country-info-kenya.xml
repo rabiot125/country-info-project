@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <m:FullCountryInfoResponse xmlns:m="http://www.oorsprong.org/websamples.countryinfo">
+      <m:FullCountryInfoResult>
+        <m:sISOCode>KE</m:sISOCode>
+        <m:sName>Kenya</m:sName>
+        <m:sCapitalCity>Nairobi</m:sCapitalCity>
+        <m:sPhoneCode>254</m:sPhoneCode>
+        <m:sContinentCode>AF</m:sContinentCode>
+        <m:sCurrencyISOCode>KES</m:sCurrencyISOCode>
+        <m:sCountryFlag>http://www.oorsprong.org/WebSamples.CountryInfo/Flags/Kenya.jpg</m:sCountryFlag>
+        <m:Languages>
+          <m:tLanguage>
+            <m:sISOCode>en</m:sISOCode>
+            <m:sName>English</m:sName>
+          </m:tLanguage>
+          <m:tLanguage>
+            <m:sISOCode>sw</m:sISOCode>
+            <m:sName>Swahili</m:sName>
+          </m:tLanguage>
+        </m:Languages>
+      </m:FullCountryInfoResult>
+    </m:FullCountryInfoResponse>
+  </soap:Body>
+</soap:Envelope>

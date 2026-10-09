@@ -1,0 +1,857 @@
+{
+  "info": {
+    "name": "Country Info Service",
+    "description": "Covers every endpoint and the main error cases. Run the folders in order (Happy path first). Set baseUrl to http://localhost:8080 (compose / port-forward) or http://country-info.local (ingress).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "countryId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Happy path",
+      "item": [
+        {
+          "name": "Create country (kenya)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"kenya\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json(); pm.collectionVariables.set('countryId', b.id);",
+                  "pm.test('ISO KE', () => pm.expect(b.isoCode).to.eql('KE'));",
+                  "pm.test('capital Nairobi', () => pm.expect(b.capitalCity).to.eql('Nairobi'));",
+                  "pm.test('Location header', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create multi-word country (south africa)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"  south   africa \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 or 409', () => pm.expect(pm.response.code).to.be.oneOf([201,409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List countries (paged)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries?page=0&size=10&sort=name,asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "name,asc"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get country by id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/{{countryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "{{countryId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update country",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/{{countryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "{{countryId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kenya\",\n  \"capitalCity\": \"Nairobi\",\n  \"phoneCode\": \"254\",\n  \"continentCode\": \"AF\",\n  \"currencyIsoCode\": \"KES\",\n  \"flagUrl\": \"http://www.oorsprong.org/WebSamples.CountryInfo/Flags/Kenya.jpg\",\n  \"languages\": [\n    {\n      \"isoCode\": \"sw\",\n      \"name\": \"Swahili\"\n    },\n    {\n      \"isoCode\": \"en\",\n      \"name\": \"English\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Error cases",
+      "item": [
+        {
+          "name": "Duplicate create -> 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"KENYA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown country -> 404",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"atlantis\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Blank name -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid characters -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"k3nya\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Malformed JSON -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": ",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown sort field -> 400",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries?sort=password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "password"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown id -> 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "999999"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update missing languages -> 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/{{countryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "{{countryId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kenya\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unsupported method -> 405",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/{{countryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "{{countryId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 405', () => pm.response.to.have.status(405));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong content type -> 415",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "kenya"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 415', () => pm.response.to.have.status(415));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Cleanup",
+      "item": [
+        {
+          "name": "Delete country",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/{{countryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "{{countryId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get deleted -> 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/{{countryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "{{countryId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete missing -> 404",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "postman-{{$timestamp}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/countries/{{countryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "countries",
+                "{{countryId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('standard error body', () => { const b = pm.response.json(); ['timestamp','status','error','code','message','path','traceId','details'].forEach(k => pm.expect(b).to.have.property(k)); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Ops (management port 8081)",
+      "item": [
+        {
+          "name": "Readiness",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8081/actuator/health/readiness"
+          }
+        },
+        {
+          "name": "Liveness",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8081/actuator/health/liveness"
+          }
+        },
+        {
+          "name": "Circuit breakers",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8081/actuator/circuitbreakers"
+          }
+        },
+        {
+          "name": "Prometheus",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8081/actuator/prometheus"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+# Production: everything comes from env vars; tighter logging and no API explorer.
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.example.countryinfo: ${LOG_LEVEL:INFO}

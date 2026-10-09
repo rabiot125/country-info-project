@@ -1,0 +1,48 @@
+# Enforced only by CNIs that support NetworkPolicy (Calico, Cilium; minikube: --cni=calico).
+# Default kindnet/bridge CNIs accept these objects but do not enforce them.
+---
+# MySQL accepts connections only from the app pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mysql-allow-app-only
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: country-info-service
+      ports:
+        - protocol: TCP
+          port: 3306
+---
+# App API port only from the ingress controller; management port only from
+# monitoring (Prometheus) and the kubelet (probes are not affected by NetworkPolicy).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: app-allow-ingress-and-monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: country-info-service
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8081

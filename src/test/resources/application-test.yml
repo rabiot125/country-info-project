@@ -1,0 +1,30 @@
+# Fast, deterministic settings for tests. The datasource comes from Testcontainers
+# (@ServiceConnection) and the SOAP endpoint from WireMock (@DynamicPropertySource).
+app:
+  soap:
+    endpoint-url: http://localhost:1/unused
+    connect-timeout: 500ms
+    read-timeout: 500ms
+  errors:
+    retry-after-seconds: 30
+
+management:
+  server:
+    port: 0
+
+resilience4j:
+  retry:
+    instances:
+      countryInfoSoap:
+        wait-duration: 10ms
+  circuitbreaker:
+    instances:
+      countryInfoSoap:
+        sliding-window-size: 4
+        minimum-number-of-calls: 4
+        wait-duration-in-open-state: 60s
+        automatic-transition-from-open-to-half-open-enabled: false
+
+logging:
+  level:
+    com.example.countryinfo: DEBUG

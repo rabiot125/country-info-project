@@ -1,0 +1,14 @@
+# Developer laptop: `mvn spring-boot:run` against a MySQL from `docker compose up mysql`.
+# Credentials still come from the environment (see .env.example); only non-secret defaults live here.
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/countryinfo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:countryinfo}
+
+app:
+  soap:
+    endpoint-url: ${SOAP_ENDPOINT_URL:http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso}
+
+logging:
+  level:
+    com.example.countryinfo: ${LOG_LEVEL:DEBUG}

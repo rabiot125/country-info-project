@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: country-info-service
+  labels:
+    app.kubernetes.io/name: country-info-service
+    app.kubernetes.io/part-of: country-info
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: country-info-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    # In-cluster only (Prometheus, debugging). Not routed by the Ingress.
+    - name: management
+      port: 8081
+      targetPort: management

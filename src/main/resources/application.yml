@@ -1,0 +1,158 @@
+# Shared configuration. Environment-specific values come from env vars
+# (ConfigMap/Secret in Kubernetes, .env in docker compose).
+
+spring:
+  application:
+    name: country-info-service
+  profiles:
+    default: local
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:20s}
+
+  datasource:
+    # url / username / password are bound from SPRING_DATASOURCE_URL, _USERNAME and
+    # _PASSWORD by Spring's relaxed binding; they are intentionally not defaulted here.
+    hikari:
+      pool-name: country-info-pool
+      # Sized for (replicas x pool) to stay well under MySQL max_connections (151 default).
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: 3000      # fail fast instead of queueing requests behind a dead DB
+      max-lifetime: 1800000         # below MySQL wait_timeout (8h) and typical LB idle timeouts
+      leak-detection-threshold: 20000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate            # Flyway owns the schema; Hibernate only checks it
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        default_batch_fetch_size: 50   # loads languages for a page of countries in one query
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  cache:
+    type: caffeine
+    cache-names: isoCodes
+    caffeine:
+      spec: maximumSize=${ISO_CACHE_MAX_SIZE:5000},expireAfterWrite=${ISO_CACHE_TTL:24h},recordStats
+
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+  mvc:
+    problemdetails:
+      enabled: false                # we return our own ApiError shape
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  error:
+    include-stacktrace: never
+    include-message: never
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:200}
+
+app:
+  soap:
+    endpoint-url: ${SOAP_ENDPOINT_URL}
+    connect-timeout: ${SOAP_CONNECT_TIMEOUT_MS:3000}ms
+    read-timeout: ${SOAP_READ_TIMEOUT_MS:5000}ms
+  errors:
+    retry-after-seconds: 30
+
+resilience4j:
+  retry:
+    instances:
+      countryInfoSoap:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        enable-randomized-wait: true
+        randomized-wait-factor: 0.5
+        retry-exceptions:
+          - com.example.countryinfo.exception.UpstreamUnavailableException
+        # Everything else (not found, SOAP fault, open circuit, full bulkhead) fails immediately.
+  circuitbreaker:
+    instances:
+      countryInfoSoap:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+        allow-health-indicator-to-fail: false   # report state, but never mark the pod unhealthy
+        record-exceptions:
+          - com.example.countryinfo.exception.UpstreamUnavailableException
+          - com.example.countryinfo.exception.InvalidUpstreamResponseException
+        ignore-exceptions:
+          - com.example.countryinfo.exception.CountryNotFoundException
+          - io.github.resilience4j.bulkhead.BulkheadFullException
+  bulkhead:
+    instances:
+      countryInfoSoap:
+        max-concurrent-calls: ${SOAP_MAX_CONCURRENT_CALLS:20}
+        max-wait-duration: 100ms
+
+management:
+  server:
+    # Actuator on its own port: probes and Prometheus reach it inside the cluster,
+    # the Ingress only routes the API port, so /actuator is never public.
+    port: ${MANAGEMENT_PORT:8081}
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,circuitbreakers,retries
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          # DB is required to serve anything. The circuit breaker is deliberately NOT here:
+          # an upstream outage must not pull every pod out of the Service, because reads,
+          # updates and deletes still work without the SOAP provider.
+          include: readinessState,db
+  health:
+    circuitbreakers:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    root: INFO
+    com.example.countryinfo: ${LOG_LEVEL:INFO}

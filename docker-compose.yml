@@ -1,0 +1,45 @@
+# Local run: cp .env.example .env && docker compose up --build
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: countryinfo
+      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME:-countryinfo}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:?set SPRING_DATASOURCE_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  app:
+    build: .
+    image: country-info-service:local
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}   # dev = JSON logs; use local for plain text
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/countryinfo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-countryinfo}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SOAP_ENDPOINT_URL: ${SOAP_ENDPOINT_URL:-http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso}
+      SOAP_CONNECT_TIMEOUT_MS: ${SOAP_CONNECT_TIMEOUT_MS:-3000}
+      SOAP_READ_TIMEOUT_MS: ${SOAP_READ_TIMEOUT_MS:-5000}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8080:8080"   # API + Swagger UI
+      - "8081:8081"   # actuator (health, prometheus)
+    read_only: true
+    tmpfs:
+      - /tmp
+    stop_grace_period: 30s
+
+volumes:
+  mysql-data:

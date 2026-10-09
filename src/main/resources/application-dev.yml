@@ -1,0 +1,4 @@
+# Shared dev / docker compose / minikube. All connection settings come from env vars.
+logging:
+  level:
+    com.example.countryinfo: ${LOG_LEVEL:DEBUG}

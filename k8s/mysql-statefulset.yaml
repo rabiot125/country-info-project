@@ -1,0 +1,101 @@
+# In-cluster MySQL for the exercise only. Production should use a managed database
+# (Cloud SQL / RDS / Azure Database for MySQL) - see docs/ARCHITECTURE.md.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/part-of: country-info
+spec:
+  clusterIP: None            # headless: stable DNS for the StatefulSet pod
+  selector:
+    app.kubernetes.io/name: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/part-of: country-info
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mysql
+        app.kubernetes.io/part-of: country-info
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        fsGroup: 999           # mysql group in the official image, so it can write the PVC
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          args:
+            - --max-connections=200
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: country-info-config
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: country-info-secrets
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: country-info-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: country-info-secrets
+                  key: MYSQL_ROOT_PASSWORD
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\" --silent"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\" --silent"]
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        # storageClassName omitted -> cluster default (minikube "standard", kind "standard").
+        resources:
+          requests:
+            storage: 2Gi

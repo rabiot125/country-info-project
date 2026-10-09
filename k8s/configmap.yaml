@@ -1,0 +1,19 @@
+# Non-secret configuration. Namespace is supplied at apply time (kubectl -n / kustomize).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: country-info-config
+  labels:
+    app.kubernetes.io/name: country-info-service
+    app.kubernetes.io/part-of: country-info
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/countryinfo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  SOAP_ENDPOINT_URL: "http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso"
+  SOAP_CONNECT_TIMEOUT_MS: "3000"
+  SOAP_READ_TIMEOUT_MS: "5000"
+  LOG_LEVEL: "INFO"
+  # 2-6 replicas x 10 = at most 60 connections, well inside MySQL's default 151.
+  DB_POOL_MAX_SIZE: "10"
+  SHUTDOWN_TIMEOUT: "20s"
+  MYSQL_DATABASE: "countryinfo"

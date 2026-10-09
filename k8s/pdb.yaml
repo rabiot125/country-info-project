@@ -1,0 +1,13 @@
+# Node drains / cluster upgrades may evict at most one replica at a time.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: country-info-service
+  labels:
+    app.kubernetes.io/name: country-info-service
+    app.kubernetes.io/part-of: country-info
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: country-info-service

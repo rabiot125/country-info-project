@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Local copy of the oorsprong.org CountryInfoService contract, trimmed to the two
+  operations this service uses (CountryISOCode, FullCountryInfo) and the types they
+  reference. Element names, namespaces and types match the published WSDL:
+  http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL
+
+  It is committed so builds are reproducible and never depend on the third-party
+  host being up. To refresh it, see README "Refreshing the WSDL".
+-->
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:xs="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://www.oorsprong.org/websamples.countryinfo"
+             name="CountryInfoService"
+             targetNamespace="http://www.oorsprong.org/websamples.countryinfo">
+
+    <types>
+        <xs:schema elementFormDefault="qualified"
+                   targetNamespace="http://www.oorsprong.org/websamples.countryinfo">
+
+            <xs:complexType name="tLanguage">
+                <xs:sequence>
+                    <xs:element name="sISOCode" type="xs:string"/>
+                    <xs:element name="sName" type="xs:string"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:complexType name="ArrayOftLanguage">
+                <xs:sequence>
+                    <xs:element name="tLanguage" type="tns:tLanguage"
+                                minOccurs="0" maxOccurs="unbounded" nillable="true"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:complexType name="tCountryInfo">
+                <xs:sequence>
+                    <xs:element name="sISOCode" type="xs:string"/>
+                    <xs:element name="sName" type="xs:string"/>
+                    <xs:element name="sCapitalCity" type="xs:string"/>
+                    <xs:element name="sPhoneCode" type="xs:string"/>
+                    <xs:element name="sContinentCode" type="xs:string"/>
+                    <xs:element name="sCurrencyISOCode" type="xs:string"/>
+                    <xs:element name="sCountryFlag" type="xs:string"/>
+                    <xs:element name="Languages" type="tns:ArrayOftLanguage"/>
+                </xs:sequence>
+            </xs:complexType>
+
+            <xs:element name="CountryISOCode">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="sCountryName" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="CountryISOCodeResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="CountryISOCodeResult" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+
+            <xs:element name="FullCountryInfo">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="sCountryISOCode" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="FullCountryInfoResponse">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="FullCountryInfoResult" type="tns:tCountryInfo"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:schema>
+    </types>
+
+    <message name="CountryISOCodeSoapRequest">
+        <part name="parameters" element="tns:CountryISOCode"/>
+    </message>
+    <message name="CountryISOCodeSoapResponse">
+        <part name="parameters" element="tns:CountryISOCodeResponse"/>
+    </message>
+    <message name="FullCountryInfoSoapRequest">
+        <part name="parameters" element="tns:FullCountryInfo"/>
+    </message>
+    <message name="FullCountryInfoSoapResponse">
+        <part name="parameters" element="tns:FullCountryInfoResponse"/>
+    </message>
+
+    <portType name="CountryInfoServiceSoapType">
+        <operation name="CountryISOCode">
+            <documentation>Returns the ISO code for the passed country name</documentation>
+            <input message="tns:CountryISOCodeSoapRequest"/>
+            <output message="tns:CountryISOCodeSoapResponse"/>
+        </operation>
+        <operation name="FullCountryInfo">
+            <documentation>Returns a struct with all the stored country information. Pass the ISO country code</documentation>
+            <input message="tns:FullCountryInfoSoapRequest"/>
+            <output message="tns:FullCountryInfoSoapResponse"/>
+        </operation>
+    </portType>
+
+    <binding name="CountryInfoServiceSoapBinding" type="tns:CountryInfoServiceSoapType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <operation name="CountryISOCode">
+            <soap:operation soapAction="" style="document"/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="FullCountryInfo">
+            <soap:operation soapAction="" style="document"/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+    </binding>
+
+    <service name="CountryInfoService">
+        <port name="CountryInfoServiceSoap" binding="tns:CountryInfoServiceSoapBinding">
+            <soap:address location="http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso"/>
+        </port>
+    </service>
+</definitions>

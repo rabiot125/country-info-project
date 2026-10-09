@@ -1,0 +1,40 @@
+# Host is a placeholder; scripts/deploy.sh substitutes INGRESS_HOST (default country-info.local).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: country-info-service
+  labels:
+    app.kubernetes.io/name: country-info-service
+    app.kubernetes.io/part-of: country-info
+  annotations:
+    # Slightly above the worst-case create latency (2 SOAP calls with retries).
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-body-size: "64k"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: country-info.local
+      http:
+        paths:
+          # Only the API and its docs are public; /actuator lives on the management port.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: country-info-service
+                port:
+                  name: http
+          - path: /swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: country-info-service
+                port:
+                  name: http
+          - path: /v3/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: country-info-service
+                port:
+                  name: http
